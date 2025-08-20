@@ -1,6 +1,6 @@
 const fetch = require('node-fetch');
 
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = 'http://localhost:5001/api';
 
 async function testAPI() {
   console.log('🧪 Testing FPS Estimator API...\n');

@@ -33,5 +33,5 @@ npm run dev
 
 echo "🎮 Application is starting up!"
 echo "📱 Frontend: http://localhost:3000"
-echo "🔧 Backend API: http://localhost:5000"
-echo "📊 Health Check: http://localhost:5000/api/health"
+echo "🔧 Backend API: http://localhost:5001"
+echo "📊 Health Check: http://localhost:5001/api/health"

@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Cpu, Monitor, Gamepad2, Settings, MonitorSmartphone } from 'lucide-react';
+import { Cpu, Monitor, Gamepad2, Settings, MonitorSmartphone } from 'lucide-react';
 
 const FPSForm = ({ appData, onSubmit, loading, initialData }) => {
   const [formData, setFormData] = useState(initialData);
-  const [gpuSearch, setGpuSearch] = useState('');
-  const [cpuSearch, setCpuSearch] = useState('');
-  const [gameSearch, setGameSearch] = useState('');
 
   useEffect(() => {
     setFormData(initialData);
@@ -40,15 +37,7 @@ const FPSForm = ({ appData, onSubmit, loading, initialData }) => {
     );
   }
 
-  const filteredGPUs = appData.gpus.filter(gpu => 
-    gpu.name.toLowerCase().includes(gpuSearch.toLowerCase())
-  );
-  const filteredCPUs = appData.cpus.filter(cpu => 
-    cpu.name.toLowerCase().includes(cpuSearch.toLowerCase())
-  );
-  const filteredGames = appData.games.filter(game => 
-    game.name.toLowerCase().includes(gameSearch.toLowerCase())
-  );
+
 
   return (
     <div className="bg-white/5 backdrop-blur-sm rounded-lg p-8 border border-white/10">
@@ -58,91 +47,74 @@ const FPSForm = ({ appData, onSubmit, loading, initialData }) => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* GPU Selection */}
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            <Monitor className="inline w-4 h-4 mr-2" />
-            Graphics Card (GPU)
-          </label>
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search GPUs..."
-              value={gpuSearch}
-              onChange={(e) => setGpuSearch(e.target.value)}
-              className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            <Search className="absolute right-3 top-3 w-5 h-5 text-gray-400" />
-          </div>
-          <div className="mt-2 max-h-48 overflow-y-auto space-y-1">
-            {filteredGPUs.map(gpu => (
-              <button
-                key={gpu.id}
-                type="button"
-                onClick={() => handleInputChange('gpuId', gpu.id)}
-                className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
-                  formData.gpuId === gpu.id
-                    ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
-                    : 'text-gray-300 hover:bg-white/10'
-                }`}
+        {/* Hardware Selection - Side by Side */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* GPU Selection */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              <Monitor className="inline w-4 h-4 mr-2" />
+              Graphics Card (GPU)
+            </label>
+            <div className="relative">
+              <select
+                value={formData.gpuId}
+                onChange={(e) => handleInputChange('gpuId', e.target.value)}
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <div className="flex items-center justify-between">
-                  <span>{gpu.name}</span>
-                  <span className={`px-2 py-1 text-xs rounded-full ${
-                    gpu.tier === 'flagship' ? 'bg-purple-500/20 text-purple-300' :
-                    gpu.tier === 'high-end' ? 'bg-blue-500/20 text-blue-300' :
-                    gpu.tier === 'mid-high' ? 'bg-green-500/20 text-green-300' :
-                    'bg-yellow-500/20 text-yellow-300'
-                  }`}>
-                    {gpu.tier}
-                  </span>
-                </div>
-              </button>
-            ))}
+                <option value="" className="bg-gray-800 text-gray-400">Select a GPU...</option>
+                {appData.gpus.map(gpu => (
+                  <option key={gpu.id} value={gpu.id} className="bg-gray-800 text-white">
+                    {gpu.name} ({gpu.tier})
+                  </option>
+                ))}
+              </select>
+            </div>
+            {formData.gpuId && (
+              <div className="mt-2">
+                <span className={`inline-block px-2 py-1 text-xs rounded-full ${
+                  appData.gpus.find(g => g.id === formData.gpuId)?.tier === 'flagship' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' :
+                  appData.gpus.find(g => g.id === formData.gpuId)?.tier === 'high-end' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' :
+                  appData.gpus.find(g => g.id === formData.gpuId)?.tier === 'mid-high' ? 'bg-green-500/20 text-green-300 border border-green-500/30' :
+                  'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'
+                }`}>
+                  {appData.gpus.find(g => g.id === formData.gpuId)?.tier} Tier
+                </span>
+              </div>
+            )}
           </div>
-        </div>
 
-        {/* CPU Selection */}
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            <Cpu className="inline w-4 h-4 mr-2" />
-            Processor (CPU)
-          </label>
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search CPUs..."
-              value={cpuSearch}
-              onChange={(e) => setCpuSearch(e.target.value)}
-              className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            <Search className="absolute right-3 top-3 w-5 h-5 text-gray-400" />
-          </div>
-          <div className="mt-2 max-h-48 overflow-y-auto space-y-1">
-            {filteredCPUs.map(cpu => (
-              <button
-                key={cpu.id}
-                type="button"
-                onClick={() => handleInputChange('cpuId', cpu.id)}
-                className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
-                  formData.cpuId === cpu.id
-                    ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
-                    : 'text-gray-300 hover:bg-white/10'
-                }`}
+          {/* CPU Selection */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              <Cpu className="inline w-4 h-4 mr-2" />
+              Processor (CPU)
+            </label>
+            <div className="relative">
+              <select
+                value={formData.cpuId}
+                onChange={(e) => handleInputChange('cpuId', e.target.value)}
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <div className="flex items-center justify-between">
-                  <span>{cpu.name}</span>
-                  <span className={`px-2 py-1 text-xs rounded-full ${
-                    cpu.tier === 'flagship' ? 'bg-purple-500/20 text-purple-300' :
-                    cpu.tier === 'high-end' ? 'bg-blue-500/20 text-blue-300' :
-                    cpu.tier === 'mid-high' ? 'bg-green-500/20 text-green-300' :
-                    'bg-yellow-500/20 text-yellow-300'
-                  }`}>
-                    {cpu.tier}
-                  </span>
-                </div>
-              </button>
-            ))}
+                <option value="" className="bg-gray-800 text-gray-400">Select a CPU...</option>
+                {appData.cpus.map(cpu => (
+                  <option key={cpu.id} value={cpu.id} className="bg-gray-800 text-white">
+                    {cpu.name} ({cpu.tier})
+                  </option>
+                ))}
+              </select>
+            </div>
+            {formData.cpuId && (
+              <div className="mt-2">
+                <span className={`inline-block px-2 py-1 text-xs rounded-full ${
+                  appData.cpus.find(c => c.id === formData.cpuId)?.tier === 'flagship' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' :
+                  appData.cpus.find(c => c.id === formData.cpuId)?.tier === 'high-end' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' :
+                  appData.cpus.find(c => c.id === formData.cpuId)?.tier === 'mid-high' ? 'bg-green-500/20 text-green-300 border border-green-500/30' :
+                  'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'
+                }`}>
+                  {appData.cpus.find(c => c.id === formData.cpuId)?.tier} Tier
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -153,36 +125,26 @@ const FPSForm = ({ appData, onSubmit, loading, initialData }) => {
             Game
           </label>
           <div className="relative">
-            <input
-              type="text"
-              placeholder="Search games..."
-              value={gameSearch}
-              onChange={(e) => setGameSearch(e.target.value)}
-              className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            <Search className="absolute right-3 top-3 w-5 h-5 text-gray-400" />
+            <select
+              value={formData.gameId}
+              onChange={(e) => handleInputChange('gameId', e.target.value)}
+              className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="" className="bg-gray-800 text-gray-400">Select a game...</option>
+              {appData.games.map(game => (
+                <option key={game.id} value={game.id} className="bg-gray-800 text-white">
+                  {game.name} ({game.genre})
+                </option>
+              ))}
+            </select>
           </div>
-          <div className="mt-2 max-h-48 overflow-y-auto space-y-1">
-            {filteredGames.map(game => (
-              <button
-                key={game.id}
-                type="button"
-                onClick={() => handleInputChange('gameId', game.id)}
-                className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
-                  formData.gameId === game.id
-                    ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
-                    : 'text-gray-300 hover:bg-white/10'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span>{game.name}</span>
-                  <span className="px-2 py-1 text-xs rounded-full bg-gray-500/20 text-gray-300">
-                    {game.genre}
-                  </span>
-                </div>
-              </button>
-            ))}
-          </div>
+          {formData.gameId && (
+            <div className="mt-2">
+              <span className="inline-block px-2 py-1 text-xs rounded-full bg-gray-500/20 text-gray-300 border border-gray-500/30">
+                {appData.games.find(g => g.id === formData.gameId)?.genre}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Resolution and Settings */}
