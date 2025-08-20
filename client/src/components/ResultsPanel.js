@@ -70,25 +70,25 @@ const ResultsPanel = ({ results, onShare }) => {
         borderWidth: 1,
       },
     },
-    scales: {
-      y: {
-        beginAtZero: true,
-        grid: {
-          color: 'rgba(255, 255, 255, 0.1)',
+          scales: {
+        y: {
+          beginAtZero: true,
+          grid: {
+            color: 'rgba(75, 85, 99, 0.3)',
+          },
+          ticks: {
+            color: 'rgba(156, 163, 175, 0.8)',
+          },
         },
-        ticks: {
-          color: 'rgba(255, 255, 255, 0.7)',
+        x: {
+          grid: {
+            display: false,
+          },
+          ticks: {
+            color: 'rgba(156, 163, 175, 0.8)',
+          },
         },
       },
-      x: {
-        grid: {
-          display: false,
-        },
-        ticks: {
-          color: 'rgba(255, 255, 255, 0.7)',
-        },
-      },
-    },
   };
 
   const getBottleneckIcon = () => {
@@ -142,7 +142,7 @@ const ResultsPanel = ({ results, onShare }) => {
   const performanceRating = getPerformanceRating();
 
   return (
-    <div className="bg-white/5 backdrop-blur-sm rounded-lg p-8 border border-white/10">
+    <div className="bg-black/40 backdrop-blur-sm rounded-lg p-8 border border-gray-800">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-white">Performance Results</h2>
         <button
@@ -150,8 +150,8 @@ const ResultsPanel = ({ results, onShare }) => {
           disabled={!hasResults}
           className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
             hasResults 
-              ? 'bg-white/10 hover:bg-white/20 text-white' 
-              : 'bg-gray-600/20 text-gray-500 cursor-not-allowed'
+              ? 'bg-gray-700 hover:bg-gray-600 text-white' 
+              : 'bg-gray-800 text-gray-500 cursor-not-allowed'
           }`}
         >
           <Share2 className="w-4 h-4" />
@@ -193,7 +193,7 @@ const ResultsPanel = ({ results, onShare }) => {
       {/* System Analysis */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         {/* Bottleneck Analysis */}
-        <div className="bg-white/5 rounded-lg p-6 border border-white/10">
+        <div className="bg-black/40 rounded-lg p-6 border border-gray-800">
           <div className="flex items-center space-x-3 mb-4">
             {getBottleneckIcon()}
             <h4 className="text-lg font-semibold text-white">System Bottleneck</h4>
@@ -210,7 +210,7 @@ const ResultsPanel = ({ results, onShare }) => {
         </div>
 
         {/* Component Scores */}
-        <div className="bg-white/5 rounded-lg p-6 border border-white/10">
+        <div className="bg-black/40 rounded-lg p-6 border border-gray-800">
           <h4 className="text-lg font-semibold text-white mb-4">Component Performance</h4>
           <div className="space-y-4">
             <div>
@@ -218,7 +218,7 @@ const ResultsPanel = ({ results, onShare }) => {
                 <span className="text-gray-400">GPU Score</span>
                 <span className="text-white">{gpuScore}/100</span>
               </div>
-              <div className="w-full bg-white/10 rounded-full h-2">
+              <div className="w-full bg-gray-700 rounded-full h-2">
                 <div 
                   className="bg-blue-500 h-2 rounded-full transition-all duration-500"
                   style={{ width: `${gpuScore}%` }}
@@ -230,7 +230,7 @@ const ResultsPanel = ({ results, onShare }) => {
                 <span className="text-gray-400">CPU Score</span>
                 <span className="text-white">{cpuScore}/100</span>
               </div>
-              <div className="w-full bg-white/10 rounded-full h-2">
+              <div className="w-full bg-gray-700 rounded-full h-2">
                 <div 
                   className="bg-green-500 h-2 rounded-full transition-all duration-500"
                   style={{ width: `${cpuScore}%` }}
@@ -242,7 +242,7 @@ const ResultsPanel = ({ results, onShare }) => {
       </div>
 
               {/* Configuration Summary */}
-        <div className="bg-white/5 rounded-lg p-6 border border-white/10">
+        <div className="bg-black/40 rounded-lg p-6 border border-gray-800">
           <h4 className="text-lg font-semibold text-white mb-4">Configuration Summary</h4>
           {hasResults ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">

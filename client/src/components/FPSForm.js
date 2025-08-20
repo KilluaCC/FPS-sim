@@ -26,12 +26,12 @@ const FPSForm = ({ appData, onSubmit, loading, initialData }) => {
 
   if (!appData) {
     return (
-      <div className="bg-white/5 backdrop-blur-sm rounded-lg p-8 border border-white/10">
+      <div className="bg-black/40 backdrop-blur-sm rounded-lg p-8 border border-gray-800">
         <div className="animate-pulse space-y-4">
-          <div className="h-4 bg-white/10 rounded w-1/4"></div>
-          <div className="h-10 bg-white/10 rounded"></div>
-          <div className="h-10 bg-white/10 rounded"></div>
-          <div className="h-10 bg-white/10 rounded"></div>
+          <div className="h-4 bg-gray-700 rounded w-1/4"></div>
+          <div className="h-10 bg-gray-700 rounded"></div>
+          <div className="h-10 bg-gray-700 rounded"></div>
+          <div className="h-10 bg-gray-700 rounded"></div>
         </div>
       </div>
     );
@@ -40,7 +40,7 @@ const FPSForm = ({ appData, onSubmit, loading, initialData }) => {
 
 
   return (
-    <div className="bg-white/5 backdrop-blur-sm rounded-lg p-8 border border-white/10">
+    <div className="bg-black/40 backdrop-blur-sm rounded-lg p-8 border border-gray-800">
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold text-white mb-2">Estimate Your FPS</h2>
         <p className="text-gray-300">Select your hardware and game to get performance estimates</p>
@@ -59,7 +59,7 @@ const FPSForm = ({ appData, onSubmit, loading, initialData }) => {
               <select
                 value={formData.gpuId}
                 onChange={(e) => handleInputChange('gpuId', e.target.value)}
-                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="" className="bg-gray-800 text-gray-400">Select a GPU...</option>
                 {appData.gpus.map(gpu => (
@@ -93,7 +93,7 @@ const FPSForm = ({ appData, onSubmit, loading, initialData }) => {
               <select
                 value={formData.cpuId}
                 onChange={(e) => handleInputChange('cpuId', e.target.value)}
-                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="" className="bg-gray-800 text-gray-400">Select a CPU...</option>
                 {appData.cpus.map(cpu => (
@@ -128,7 +128,7 @@ const FPSForm = ({ appData, onSubmit, loading, initialData }) => {
             <select
               value={formData.gameId}
               onChange={(e) => handleInputChange('gameId', e.target.value)}
-              className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="" className="bg-gray-800 text-gray-400">Select a game...</option>
               {appData.games.map(game => (
@@ -157,7 +157,7 @@ const FPSForm = ({ appData, onSubmit, loading, initialData }) => {
             <select
               value={formData.resolutionId}
               onChange={(e) => handleInputChange('resolutionId', e.target.value)}
-              className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               {appData.resolutions.map(res => (
                 <option key={res.id} value={res.id} className="bg-gray-800 text-white">
@@ -175,7 +175,7 @@ const FPSForm = ({ appData, onSubmit, loading, initialData }) => {
             <select
               value={formData.settingsId}
               onChange={(e) => handleInputChange('settingsId', e.target.value)}
-              className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               {appData.settings.map(setting => (
                 <option key={setting.id} value={setting.id} className="bg-gray-800 text-white">

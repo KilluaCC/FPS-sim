@@ -3,7 +3,7 @@ import { Monitor, Zap } from 'lucide-react';
 
 const Header = () => {
   return (
-    <header className="bg-black/20 backdrop-blur-sm border-b border-white/10">
+    <header className="bg-black/40 backdrop-blur-sm border-b border-gray-800">
       <div className="container mx-auto px-4 py-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">

@@ -3,7 +3,7 @@ import { Megaphone, Star } from 'lucide-react';
 
 const AdPlaceholder = () => {
   return (
-    <div className="bg-gradient-to-br from-yellow-500/10 to-orange-500/10 backdrop-blur-sm rounded-lg p-6 border border-yellow-500/20">
+    <div className="bg-black/40 backdrop-blur-sm rounded-lg p-6 border border-gray-800">
       <div className="text-center">
         <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-xl mx-auto mb-4">
           <Megaphone className="w-6 h-6 text-white" />

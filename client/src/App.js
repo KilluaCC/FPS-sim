@@ -83,7 +83,7 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black">
       <Header />
       
       <main className="container mx-auto px-4 py-8">
@@ -114,7 +114,7 @@ function App() {
             <AdPlaceholder />
             
             {results && (
-              <div className="bg-white/5 backdrop-blur-sm rounded-lg p-6 border border-white/10">
+              <div className="bg-black/40 backdrop-blur-sm rounded-lg p-6 border border-gray-800">
                 <h3 className="text-lg font-semibold text-white mb-4">Performance Tips</h3>
                 <div className="space-y-3 text-sm text-gray-300">
                   {results.bottleneck === 'gpu' && (
