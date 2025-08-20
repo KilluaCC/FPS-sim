@@ -21,7 +21,16 @@ ChartJS.register(
 );
 
 const ResultsPanel = ({ results, onShare }) => {
-  const { minFPS, avgFPS, maxFPS, bottleneck, gpuScore, cpuScore, components } = results;
+  // If no results yet, show placeholder data
+  const hasResults = results && results.avgFPS;
+  
+  const minFPS = hasResults ? results.minFPS : '—';
+  const avgFPS = hasResults ? results.avgFPS : '—';
+  const maxFPS = hasResults ? results.maxFPS : '—';
+  const bottleneck = hasResults ? results.bottleneck : 'pending';
+  const gpuScore = hasResults ? results.gpuScore : 0;
+  const cpuScore = hasResults ? results.cpuScore : 0;
+  const components = hasResults ? results.components : null;
 
   // Chart data for FPS visualization
   const chartData = {
@@ -29,7 +38,7 @@ const ResultsPanel = ({ results, onShare }) => {
     datasets: [
       {
         label: 'FPS',
-        data: [minFPS, avgFPS, maxFPS],
+        data: hasResults ? [minFPS, avgFPS, maxFPS] : [0, 0, 0],
         backgroundColor: [
           'rgba(239, 68, 68, 0.8)',   // Red for min
           'rgba(59, 130, 246, 0.8)',  // Blue for avg
@@ -88,6 +97,8 @@ const ResultsPanel = ({ results, onShare }) => {
         return <AlertTriangle className="w-6 h-6 text-yellow-400" />;
       case 'cpu':
         return <AlertTriangle className="w-6 h-6 text-orange-400" />;
+      case 'pending':
+        return <div className="w-6 h-6 bg-gray-400 rounded-full animate-pulse" />;
       default:
         return <CheckCircle className="w-6 h-6 text-green-400" />;
     }
@@ -99,6 +110,8 @@ const ResultsPanel = ({ results, onShare }) => {
         return 'GPU Limited';
       case 'cpu':
         return 'CPU Limited';
+      case 'pending':
+        return 'Pending Analysis';
       default:
         return 'Well Balanced';
     }
@@ -110,12 +123,15 @@ const ResultsPanel = ({ results, onShare }) => {
         return 'bg-yellow-500/20 border-yellow-500/30 text-yellow-300';
       case 'cpu':
         return 'bg-orange-500/20 border-orange-500/30 text-orange-300';
+      case 'pending':
+        return 'bg-gray-500/20 border-gray-500/30 text-gray-400';
       default:
         return 'bg-green-500/20 border-green-500/30 text-green-300';
     }
   };
 
   const getPerformanceRating = () => {
+    if (!hasResults) return { text: 'Pending', color: 'text-gray-400', bg: 'bg-gray-500/20' };
     if (avgFPS >= 120) return { text: 'Excellent', color: 'text-green-400', bg: 'bg-green-500/20' };
     if (avgFPS >= 80) return { text: 'Great', color: 'text-blue-400', bg: 'bg-blue-500/20' };
     if (avgFPS >= 60) return { text: 'Good', color: 'text-yellow-400', bg: 'bg-yellow-500/20' };
@@ -131,10 +147,15 @@ const ResultsPanel = ({ results, onShare }) => {
         <h2 className="text-2xl font-bold text-white">Performance Results</h2>
         <button
           onClick={onShare}
-          className="flex items-center space-x-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg transition-colors"
+          disabled={!hasResults}
+          className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+            hasResults 
+              ? 'bg-white/10 hover:bg-white/20 text-white' 
+              : 'bg-gray-600/20 text-gray-500 cursor-not-allowed'
+          }`}
         >
           <Share2 className="w-4 h-4" />
-          <span>Share</span>
+          <span>{hasResults ? 'Share' : 'Share (No Results)'}</span>
         </button>
       </div>
 
@@ -180,11 +201,12 @@ const ResultsPanel = ({ results, onShare }) => {
           <div className={`inline-block px-3 py-2 rounded-full text-sm font-medium border ${getBottleneckColor()}`}>
             {getBottleneckText()}
           </div>
-          <p className="text-gray-400 text-sm mt-3">
-            {bottleneck === 'gpu' && 'Your graphics card is limiting performance. Consider upgrading to a more powerful GPU.'}
-            {bottleneck === 'cpu' && 'Your processor is limiting performance. A faster CPU would improve your gaming experience.'}
-            {bottleneck === 'balanced' && 'Your system is well-balanced for this game. Both CPU and GPU are working efficiently.'}
-          </p>
+                            <p className="text-gray-400 text-sm mt-3">
+                    {bottleneck === 'gpu' && 'Your graphics card is limiting performance. Consider upgrading to a more powerful GPU.'}
+                    {bottleneck === 'cpu' && 'Your processor is limiting performance. A faster CPU would improve your gaming experience.'}
+                    {bottleneck === 'balanced' && 'Your system is well-balanced for this game. Both CPU and GPU are working efficiently.'}
+                    {bottleneck === 'pending' && 'Run the FPS calculation to analyze your system performance and identify potential bottlenecks.'}
+                  </p>
         </div>
 
         {/* Component Scores */}
@@ -219,36 +241,43 @@ const ResultsPanel = ({ results, onShare }) => {
         </div>
       </div>
 
-      {/* Configuration Summary */}
-      <div className="bg-white/5 rounded-lg p-6 border border-white/10">
-        <h4 className="text-lg font-semibold text-white mb-4">Configuration Summary</h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-          <div>
-            <span className="text-gray-400">GPU:</span>
-            <span className="text-white ml-2">{components.gpu.name}</span>
-          </div>
-          <div>
-            <span className="text-gray-400">CPU:</span>
-            <span className="text-white ml-2">{components.cpu.name}</span>
-          </div>
-          <div>
-            <span className="text-gray-400">Game:</span>
-            <span className="text-white ml-2">{components.game.name}</span>
-          </div>
-          <div>
-            <span className="text-gray-400">Resolution:</span>
-            <span className="text-white ml-2">{components.resolution.name}</span>
-          </div>
-          <div>
-            <span className="text-gray-400">Settings:</span>
-            <span className="text-white ml-2">{components.settings.name}</span>
-          </div>
-          <div>
-            <span className="text-gray-400">Game Type:</span>
-            <span className="text-white ml-2 capitalize">{components.game.genre}</span>
-          </div>
+              {/* Configuration Summary */}
+        <div className="bg-white/5 rounded-lg p-6 border border-white/10">
+          <h4 className="text-lg font-semibold text-white mb-4">Configuration Summary</h4>
+          {hasResults ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="text-gray-400">GPU:</span>
+                <span className="text-white ml-2">{components.gpu.name}</span>
+              </div>
+              <div>
+                <span className="text-gray-400">CPU:</span>
+                <span className="text-white ml-2">{components.cpu.name}</span>
+              </div>
+              <div>
+                <span className="text-gray-400">Game:</span>
+                <span className="text-white ml-2">{components.game.name}</span>
+              </div>
+              <div>
+                <span className="text-gray-400">Resolution:</span>
+                <span className="text-white ml-2">{components.resolution.name}</span>
+              </div>
+              <div>
+                <span className="text-gray-400">Settings:</span>
+                <span className="text-white ml-2">{components.settings.name}</span>
+              </div>
+              <div>
+                <span className="text-gray-400">Game Type:</span>
+                <span className="text-white ml-2 capitalize">{components.game.genre}</span>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <div className="text-gray-400 text-lg mb-2">No Configuration Selected</div>
+              <div className="text-gray-500 text-sm">Select your hardware and game above to see configuration details</div>
+            </div>
+          )}
         </div>
-      </div>
     </div>
   );
 };
