@@ -61,19 +61,19 @@ def main():
             print("\n🔍 Sample Data:")
             print(df.head(3).to_string(index=False))
             
-                # Show proxy statistics for GPUCheck
-                if 'gpucheck_scraper' in locals() and hasattr(gpucheck_scraper, 'get_proxy_stats'):
-                    proxy_stats = gpucheck_scraper.get_proxy_stats()
-                    print("\n🌐 Proxy Statistics:")
-                    for key, value in proxy_stats.items():
-                        print(f"   {key}: {value}")
-                
-                # Show UserBenchmark scraper statistics
-                if hasattr(manager.scrapers[1], 'get_scraping_stats'):
-                    ub_stats = manager.scrapers[1].get_scraping_stats()
-                    print("\n📊 UserBenchmark Scraper Statistics:")
-                    for key, value in ub_stats.items():
-                        print(f"   {key}: {value}")
+            # Show proxy statistics for GPUCheck
+            if 'gpucheck_scraper' in locals() and hasattr(gpucheck_scraper, 'get_proxy_stats'):
+                proxy_stats = gpucheck_scraper.get_proxy_stats()
+                print("\n🌐 Proxy Statistics:")
+                for key, value in proxy_stats.items():
+                    print(f"   {key}: {value}")
+            
+            # Show UserBenchmark scraper statistics
+            if hasattr(manager.scrapers[1], 'get_scraping_stats'):
+                ub_stats = manager.scrapers[1].get_scraping_stats()
+                print("\n📊 UserBenchmark Scraper Statistics:")
+                for key, value in ub_stats.items():
+                    print(f"   {key}: {value}")
             
             # Save additional formats
             print("\n💾 Saving data...")
