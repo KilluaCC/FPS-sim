@@ -1,0 +1,62 @@
+[alias]
+    # Quick status
+    st = status
+    s = status --short
+    
+    # Quick add and commit
+    ac = !git add . && git commit -m
+    qc = !git add . && git commit -m "Quick commit $(date +%Y-%m-%d_%H:%M:%S)"
+    
+    # Quick push
+    qp = !git add . && git commit -m "Update $(date +%Y-%m-%d_%H:%M:%S)" && git push
+    
+    # Show recent commits
+    recent = log --oneline -10
+    last = log -1 --pretty=format:"%h - %an, %ar : %s"
+    
+    # Branch operations
+    br = branch
+    co = checkout
+    cb = checkout -b
+    
+    # Show what's changed
+    changes = diff --name-only
+    staged = diff --cached --name-only
+    
+    # Quick summary
+    summary = !git log --oneline --graph --decorate --all
+    
+    # Undo last commit (keep changes)
+    undo = reset --soft HEAD~1
+    
+    # Show file history
+    history = log --follow --oneline
+    
+    # Quick stash
+    qstash = stash push -m "Quick stash $(date +%Y-%m-%d_%H:%M:%S)"
+    
+    # Show current branch
+    current = branch --show-current
+    
+    # Quick merge
+    qmerge = !git checkout main && git pull && git checkout - && git merge main
+    
+    # Show remote info
+    remote-info = remote -v
+    
+    # Quick fetch and pull
+    sync = !git fetch && git pull
+
+[core]
+    editor = code --wait
+    autocrlf = input
+
+[push]
+    default = simple
+    autoSetupRemote = true
+
+[init]
+    defaultBranch = main
+
+[help]
+    autocorrect = 1
