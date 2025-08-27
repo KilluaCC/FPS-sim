@@ -1,0 +1,31 @@
+{
+  "name": "fps-estimator-database",
+  "version": "1.0.0",
+  "description": "Database setup for FPS Estimator app",
+  "main": "seed.js",
+  "scripts": {
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "node seed.js",
+    "db:studio": "prisma studio",
+    "db:reset": "prisma migrate reset --force",
+    "setup": "npm run db:generate && npm run db:push && npm run db:seed"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.7.1"
+  },
+  "devDependencies": {
+    "prisma": "^5.7.1"
+  },
+  "keywords": [
+    "postgresql",
+    "prisma",
+    "database",
+    "fps",
+    "gaming",
+    "hardware"
+  ],
+  "author": "FPS Estimator Team",
+  "license": "MIT"
+}

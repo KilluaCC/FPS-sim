@@ -28,8 +28,7 @@ const ResultsPanel = ({ results, onShare }) => {
   const avgFPS = hasResults ? results.avgFPS : '—';
   const maxFPS = hasResults ? results.maxFPS : '—';
   const bottleneck = hasResults ? results.bottleneck : 'pending';
-  const gpuScore = hasResults ? results.gpuScore : 0;
-  const cpuScore = hasResults ? results.cpuScore : 0;
+  const source = hasResults ? results.source : null;
   const components = hasResults ? results.components : null;
 
   // Chart data for FPS visualization
@@ -144,7 +143,22 @@ const ResultsPanel = ({ results, onShare }) => {
   return (
     <div className="bg-black/40 backdrop-blur-sm rounded-lg p-8 border border-gray-800">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-white">Performance Results</h2>
+        <div>
+          <h2 className="text-2xl font-bold text-white">Performance Results</h2>
+          {source && (
+            <div className="mt-2">
+              {source === 'database' ? (
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-300 border border-green-500/30">
+                  📊 Real Benchmark Data
+                </span>
+              ) : (
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-300 border border-yellow-500/30">
+                  ⚡ Estimated Performance
+                </span>
+              )}
+            </div>
+          )}
+        </div>
         <button
           onClick={onShare}
           disabled={!hasResults}
@@ -209,75 +223,41 @@ const ResultsPanel = ({ results, onShare }) => {
                   </p>
         </div>
 
-        {/* Component Scores */}
+        {/* Component Details */}
         <div className="bg-black/40 rounded-lg p-6 border border-gray-800">
-          <h4 className="text-lg font-semibold text-white mb-4">Component Performance</h4>
-          <div className="space-y-4">
-            <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span className="text-gray-400">GPU Score</span>
-                <span className="text-white">{gpuScore}/100</span>
-              </div>
-              <div className="w-full bg-gray-700 rounded-full h-2">
-                <div 
-                  className="bg-blue-500 h-2 rounded-full transition-all duration-500"
-                  style={{ width: `${gpuScore}%` }}
-                ></div>
-              </div>
-            </div>
-            <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span className="text-gray-400">CPU Score</span>
-                <span className="text-white">{cpuScore}/100</span>
-              </div>
-              <div className="w-full bg-gray-700 rounded-full h-2">
-                <div 
-                  className="bg-green-500 h-2 rounded-full transition-all duration-500"
-                  style={{ width: `${cpuScore}%` }}
-                ></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-              {/* Configuration Summary */}
-        <div className="bg-black/40 rounded-lg p-6 border border-gray-800">
-          <h4 className="text-lg font-semibold text-white mb-4">Configuration Summary</h4>
-          {hasResults ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <div>
+          <h4 className="text-lg font-semibold text-white mb-4">Component Details</h4>
+          {hasResults && components ? (
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between">
                 <span className="text-gray-400">GPU:</span>
-                <span className="text-white ml-2">{components.gpu.name}</span>
+                <span className="text-white">{components.gpu.name}</span>
               </div>
-              <div>
+              <div className="flex justify-between">
                 <span className="text-gray-400">CPU:</span>
-                <span className="text-white ml-2">{components.cpu.name}</span>
+                <span className="text-white">{components.cpu.name}</span>
               </div>
-              <div>
+              <div className="flex justify-between">
                 <span className="text-gray-400">Game:</span>
-                <span className="text-white ml-2">{components.game.name}</span>
+                <span className="text-white">{components.game.name}</span>
               </div>
-              <div>
+              <div className="flex justify-between">
                 <span className="text-gray-400">Resolution:</span>
-                <span className="text-white ml-2">{components.resolution.name}</span>
+                <span className="text-white">{components.resolution}</span>
               </div>
-              <div>
+              <div className="flex justify-between">
                 <span className="text-gray-400">Settings:</span>
-                <span className="text-white ml-2">{components.settings.name}</span>
-              </div>
-              <div>
-                <span className="text-gray-400">Game Type:</span>
-                <span className="text-white ml-2 capitalize">{components.game.genre}</span>
+                <span className="text-white">{components.settings}</span>
               </div>
             </div>
           ) : (
-            <div className="text-center py-8">
-              <div className="text-gray-400 text-lg mb-2">No Configuration Selected</div>
-              <div className="text-gray-500 text-sm">Select your hardware and game above to see configuration details</div>
+            <div className="text-center py-4">
+              <div className="text-gray-400 text-sm">No configuration selected</div>
             </div>
           )}
         </div>
+      </div>
+
+
     </div>
   );
 };

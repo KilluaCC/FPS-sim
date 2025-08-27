@@ -1,0 +1,146 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Cpu {
+  id            Int      @id @default(autoincrement())
+  name          String   @unique @db.VarChar(255)
+  brand         String   @db.VarChar(50)
+  cores         Int
+  threads       Int
+  baseClock     Decimal  @map("base_clock") @db.Decimal(4, 2)
+  boostClock    Decimal? @map("boost_clock") @db.Decimal(4, 2)
+  tdp           Int?
+  releaseDate   DateTime? @map("release_date") @db.Date
+  tier          String   @default("mid") @db.VarChar(20)
+  priceUsd      Decimal? @map("price_usd") @db.Decimal(8, 2)
+  socket        String?  @db.VarChar(50)
+  architecture  String?  @db.VarChar(50)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  benchmarks    Benchmark[]
+
+  @@map("cpu")
+}
+
+model Gpu {
+  id                Int      @id @default(autoincrement())
+  name              String   @unique @db.VarChar(255)
+  brand             String   @db.VarChar(50)
+  vramGb            Int      @map("vram_gb")
+  baseClock         Decimal  @map("base_clock") @db.Decimal(6, 2)
+  boostClock        Decimal? @map("boost_clock") @db.Decimal(6, 2)
+  tdp               Int?
+  releaseDate       DateTime? @map("release_date") @db.Date
+  tier              String   @default("mid") @db.VarChar(20)
+  priceUsd          Decimal? @map("price_usd") @db.Decimal(8, 2)
+  memoryType        String?  @map("memory_type") @db.VarChar(20)
+  memoryBusWidth    Int?     @map("memory_bus_width")
+  rayTracingCores   Int?     @map("ray_tracing_cores")
+  tensorCores       Int?     @map("tensor_cores")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  benchmarks        Benchmark[]
+
+  @@map("gpu")
+}
+
+model Ram {
+  id          Int      @id @default(autoincrement())
+  sizeGb      Int      @map("size_gb")
+  speedMhz    Int      @map("speed_mhz")
+  type        String   @db.VarChar(20)
+  brand       String?  @db.VarChar(100)
+  model       String?  @db.VarChar(255)
+  casLatency  Int?     @map("cas_latency")
+  voltage     Decimal? @db.Decimal(3, 2)
+  priceUsd    Decimal? @map("price_usd") @db.Decimal(8, 2)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  benchmarks  Benchmark[]
+
+  @@map("ram")
+}
+
+model Game {
+  id                  Int      @id @default(autoincrement())
+  name                String   @unique @db.VarChar(255)
+  genre               String?  @db.VarChar(100)
+  releaseDate         DateTime? @map("release_date") @db.Date
+  developer           String?  @db.VarChar(255)
+  publisher           String?  @db.VarChar(255)
+  engine              String?  @db.VarChar(100)
+  gpuIntensive        Boolean  @default(false) @map("gpu_intensive")
+  cpuIntensive        Boolean  @default(false) @map("cpu_intensive")
+  ramIntensive        Boolean  @default(false) @map("ram_intensive")
+  rayTracingSupport   Boolean  @default(false) @map("ray_tracing_support")
+  dlssSupport         Boolean  @default(false) @map("dlss_support")
+  fsrSupport          Boolean  @default(false) @map("fsr_support")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  benchmarks          Benchmark[]
+
+  @@map("game")
+}
+
+model Benchmark {
+  id              Int      @id @default(autoincrement())
+  cpuId           Int      @map("cpu_id")
+  gpuId           Int      @map("gpu_id")
+  ramId           Int      @map("ram_id")
+  gameId          Int      @map("game_id")
+  resolution      String   @db.VarChar(20)
+  settings        String   @db.VarChar(50)
+  avgFps          Decimal  @map("avg_fps") @db.Decimal(6, 2)
+  minFps          Decimal? @map("min_fps") @db.Decimal(6, 2)
+  maxFps          Decimal? @map("max_fps") @db.Decimal(6, 2)
+  source          String?  @db.VarChar(255)
+  testDate        DateTime? @map("test_date") @db.Date
+  driverVersion   String?  @map("driver_version") @db.VarChar(100)
+  osVersion       String?  @map("os_version") @db.VarChar(100)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  cpu             Cpu      @relation(fields: [cpuId], references: [id], onDelete: Cascade)
+  gpu             Gpu      @relation(fields: [gpuId], references: [id], onDelete: Cascade)
+  ram             Ram      @relation(fields: [ramId], references: [id], onDelete: Cascade)
+  game            Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  userSubmissions UserSubmission[]
+
+  @@map("benchmark")
+}
+
+model UserSubmission {
+  id              Int      @id @default(autoincrement())
+  benchmarkId     Int      @map("benchmark_id")
+  userId          String?  @map("user_id") @db.VarChar(255)
+  avgFps          Decimal  @map("avg_fps") @db.Decimal(6, 2)
+  minFps          Decimal? @map("min_fps") @db.Decimal(6, 2)
+  maxFps          Decimal? @map("max_fps") @db.Decimal(6, 2)
+  hardwareMatch   Boolean  @default(true) @map("hardware_match")
+  confidenceRating Int?    @map("confidence_rating")
+  notes           String?
+  submittedAt     DateTime @default(now()) @map("submitted_at")
+
+  // Relations
+  benchmark       Benchmark @relation(fields: [benchmarkId], references: [id], onDelete: Cascade)
+
+  @@map("user_submission")
+}

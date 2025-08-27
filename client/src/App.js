@@ -11,8 +11,8 @@ function App() {
     gpuId: '',
     cpuId: '',
     gameId: '',
-    resolutionId: '1080p',
-    settingsId: 'high'
+    resolution: '1080p',
+    settings: 'High'
   });
   
   const [results, setResults] = useState(null);
@@ -42,12 +42,20 @@ function App() {
     setError(null);
     
     try {
+      // Convert string IDs to numbers for the API
+      const apiData = {
+        ...formData,
+        gpuId: parseInt(formData.gpuId),
+        cpuId: parseInt(formData.cpuId),
+        gameId: parseInt(formData.gameId)
+      };
+      
       const response = await fetch('/api/estimate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(apiData),
       });
       
       const data = await response.json();

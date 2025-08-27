@@ -70,7 +70,7 @@ const FPSForm = ({ appData, onSubmit, loading, initialData }) => {
               </select>
             </div>
             {formData.gpuId && (
-              <div className="mt-2">
+              <div className="mt-2 space-y-1">
                 <span className={`inline-block px-2 py-1 text-xs rounded-full ${
                   appData.gpus.find(g => g.id === formData.gpuId)?.tier === 'flagship' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' :
                   appData.gpus.find(g => g.id === formData.gpuId)?.tier === 'high-end' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' :
@@ -79,6 +79,16 @@ const FPSForm = ({ appData, onSubmit, loading, initialData }) => {
                 }`}>
                   {appData.gpus.find(g => g.id === formData.gpuId)?.tier} Tier
                 </span>
+                {appData.gpus.find(g => g.id === formData.gpuId)?.price && (
+                  <div className="text-xs text-gray-400">
+                    💰 ${appData.gpus.find(g => g.id === formData.gpuId)?.price}
+                  </div>
+                )}
+                {appData.gpus.find(g => g.id === formData.gpuId)?.brand && (
+                  <div className="text-xs text-gray-400">
+                    🏷️ {appData.gpus.find(g => g.id === formData.gpuId)?.brand}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -104,7 +114,7 @@ const FPSForm = ({ appData, onSubmit, loading, initialData }) => {
               </select>
             </div>
             {formData.cpuId && (
-              <div className="mt-2">
+              <div className="mt-2 space-y-1">
                 <span className={`inline-block px-2 py-1 text-xs rounded-full ${
                   appData.cpus.find(c => c.id === formData.cpuId)?.tier === 'flagship' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' :
                   appData.cpus.find(c => c.id === formData.cpuId)?.tier === 'high-end' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' :
@@ -113,6 +123,21 @@ const FPSForm = ({ appData, onSubmit, loading, initialData }) => {
                 }`}>
                   {appData.cpus.find(c => c.id === formData.cpuId)?.tier} Tier
                 </span>
+                {appData.cpus.find(c => c.id === formData.cpuId)?.price && (
+                  <div className="text-xs text-gray-400">
+                    💰 ${appData.cpus.find(c => c.id === formData.cpuId)?.price}
+                  </div>
+                )}
+                {appData.cpus.find(c => c.id === formData.cpuId)?.brand && (
+                  <div className="text-xs text-gray-400">
+                    🏷️ {appData.cpus.find(c => c.id === formData.cpuId)?.brand}
+                  </div>
+                )}
+                {appData.cpus.find(c => c.id === formData.cpuId)?.cores && (
+                  <div className="text-xs text-gray-400">
+                    🔧 {appData.cpus.find(c => c.id === formData.cpuId)?.cores} cores / {appData.cpus.find(c => c.id === formData.cpuId)?.threads} threads
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -139,10 +164,25 @@ const FPSForm = ({ appData, onSubmit, loading, initialData }) => {
             </select>
           </div>
           {formData.gameId && (
-            <div className="mt-2">
+            <div className="mt-2 space-y-1">
               <span className="inline-block px-2 py-1 text-xs rounded-full bg-gray-500/20 text-gray-300 border border-gray-500/30">
                 {appData.games.find(g => g.id === formData.gameId)?.genre}
               </span>
+              {appData.games.find(g => g.id === formData.gameId)?.gpuIntensive && (
+                <div className="text-xs text-red-400">
+                  🔥 GPU Intensive
+                </div>
+              )}
+              {appData.games.find(g => g.id === formData.gameId)?.cpuIntensive && (
+                <div className="text-xs text-blue-400">
+                  ⚡ CPU Intensive
+                </div>
+              )}
+              {appData.games.find(g => g.id === formData.gameId)?.rayTracingSupport && (
+                <div className="text-xs text-purple-400">
+                  ✨ Ray Tracing Support
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -155,8 +195,8 @@ const FPSForm = ({ appData, onSubmit, loading, initialData }) => {
               Resolution
             </label>
             <select
-              value={formData.resolutionId}
-              onChange={(e) => handleInputChange('resolutionId', e.target.value)}
+              value={formData.resolution}
+              onChange={(e) => handleInputChange('resolution', e.target.value)}
               className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               {appData.resolutions.map(res => (
@@ -173,8 +213,8 @@ const FPSForm = ({ appData, onSubmit, loading, initialData }) => {
               Graphics Settings
             </label>
             <select
-              value={formData.settingsId}
-              onChange={(e) => handleInputChange('settingsId', e.target.value)}
+              value={formData.settings}
+              onChange={(e) => handleInputChange('settings', e.target.value)}
               className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               {appData.settings.map(setting => (
