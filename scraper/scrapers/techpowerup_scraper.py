@@ -142,6 +142,720 @@ class TechPowerUpScraper(BaseScraper):
         
         return benchmarks
     
+    def extract_fallback_benchmarks(self, soup: BeautifulSoup, game_title: str, game_url: str) -> List[BenchmarkData]:
+        """Extract benchmarks using fallback methods when structured data isn't available"""
+        benchmarks = []
+        
+        try:
+            # Try to extract from any remaining text content
+            text_benchmarks = self.extract_from_text(soup, game_title, game_url)
+            benchmarks.extend(text_benchmarks)
+            
+            # Look for any performance mentions in the page
+            performance_mentions = soup.find_all(text=re.compile(r'\d+\s*FPS', re.I))
+            
+            for mention in performance_mentions:
+                try:
+                    # Extract FPS value
+                    fps_match = re.search(r'(\d+(?:\.\d+)?)\s*FPS', mention, re.IGNORECASE)
+                    if not fps_match:
+                        continue
+                    
+                    fps_value = float(fps_match.group(1))
+                    
+                    # Try to find hardware context
+                    parent = mention.parent
+                    gpu_name = "Unknown GPU"
+                    cpu_name = "Unknown CPU"
+                    
+                    # Look for hardware names in nearby elements
+                    if parent:
+                        # Look for GPU mentions
+                        gpu_elements = parent.find_all(text=re.compile(r'RTX|GTX|RX|Radeon|GeForce', re.I))
+                        if gpu_elements:
+                            gpu_name = self.clean_text(gpu_elements[0])
+                        
+                        # Look for CPU mentions
+                        cpu_elements = parent.find_all(text=re.compile(r'Intel|AMD|Ryzen|Core|i[3579]', re.I))
+                        if cpu_elements:
+                            cpu_name = self.clean_text(cpu_elements[0])
+                    
+                    # Create benchmark if we have valid data
+                    if gpu_name != "Unknown GPU" or cpu_name != "Unknown CPU":
+                        benchmark = BenchmarkData(
+                            gpu_name=gpu_name,
+                            cpu_name=cpu_name,
+                            game_title=game_title,
+                            resolution="1080p",
+                            settings="High",
+                            avg_fps=fps_value,
+                            min_fps=fps_value * 0.8,
+                            max_fps=fps_value * 1.2,
+                            source_url=game_url,
+                            source_site=self.name,
+                            timestamp=pd.Timestamp.now().isoformat()
+                        )
+                        benchmarks.append(benchmark)
+                        
+                except Exception as e:
+                    logger.debug(f"Failed to parse performance mention: {e}")
+                    continue
+                    
+        except Exception as e:
+            logger.error(f"Error in fallback extraction: {e}")
+        
+        return benchmarks
+
+    def extract_structured_benchmarks(self, soup: BeautifulSoup, game_title: str, game_url: str) -> List[BenchmarkData]:
+        """Extract benchmarks from structured data like tables and lists"""
+        benchmarks = []
+        
+        try:
+            # Look for benchmark tables
+            tables = soup.find_all('table')
+            for table in tables:
+                table_benchmarks = self.parse_benchmark_table(table, game_title, game_url)
+                benchmarks.extend(table_benchmarks)
+            
+            # Look for structured lists
+            lists = soup.find_all(['ul', 'ol'])
+            for list_elem in lists:
+                list_benchmarks = self.parse_benchmark_list(list_elem, game_title, game_url)
+                benchmarks.extend(list_benchmarks)
+            
+            # Look for structured divs with performance data
+            performance_divs = soup.find_all('div', class_=re.compile(r'benchmark|performance|result|score', re.I))
+            for div in performance_divs:
+                div_benchmarks = self.parse_structured_div(div, game_title, game_url)
+                benchmarks.extend(div_benchmarks)
+                
+        except Exception as e:
+            logger.error(f"Error extracting structured benchmarks: {e}")
+        
+        return benchmarks
+
+    def extract_chart_benchmarks(self, soup: BeautifulSoup, game_title: str, game_url: str) -> List[BenchmarkData]:
+        """Extract benchmarks from charts and graphs"""
+        benchmarks = []
+        
+        try:
+            # Look for chart containers
+            chart_containers = soup.find_all(['div', 'section'], class_=re.compile(r'chart|graph|performance|benchmark', re.I))
+            
+            for chart in chart_containers:
+                # Look for chart data points
+                data_points = chart.find_all(['div', 'span'], class_=re.compile(r'data|point|value|fps', re.I))
+                
+                for point in data_points:
+                    benchmark = self.parse_chart_data_point(point, game_title, game_url)
+                    if benchmark:
+                        benchmarks.append(benchmark)
+                
+                # Look for chart tooltips or legends
+                tooltips = chart.find_all(['div', 'span'], class_=re.compile(r'tooltip|legend|label', re.I))
+                for tooltip in tooltips:
+                    benchmark = self.parse_chart_data_point(tooltip, game_title, game_url)
+                    if benchmark:
+                        benchmarks.append(benchmark)
+                        
+        except Exception as e:
+            logger.error(f"Error extracting chart benchmarks: {e}")
+        
+        return benchmarks
+
+    def extract_text_benchmarks(self, soup: BeautifulSoup, game_title: str, game_url: str) -> List[BenchmarkData]:
+        """Extract benchmarks from text content - TUNED FOR TECHPOWERUP WITH EXPANDED CONTEXT"""
+        benchmarks = []
+        
+        try:
+            # Get all text content
+            text_content = soup.get_text()
+            
+            # TUNED: Look for TechPowerUp specific FPS patterns
+            print(f"🔍 Analyzing text content for FPS data...")
+            
+            # Pattern 1: "X FPS" format (most common)
+            fps_pattern1 = re.findall(r'(\d+(?:\.\d+)?)\s*FPS', text_content, re.IGNORECASE)
+            print(f"   Pattern 'X FPS': {len(fps_pattern1)} matches - {fps_pattern1[:5]}")
+            
+            # Pattern 2: "X fps" format
+            fps_pattern2 = re.findall(r'(\d+(?:\.\d+)?)\s*fps', text_content, re.IGNORECASE)
+            print(f"   Pattern 'X fps': {len(fps_pattern2)} matches - {fps_pattern2[:5]}")
+            
+            # Pattern 3: "FPS: X" format
+            fps_pattern3 = re.findall(r'FPS[:\s]+(\d+(?:\.\d+)?)', text_content, re.IGNORECASE)
+            print(f"   Pattern 'FPS: X': {len(fps_pattern3)} matches - {fps_pattern3[:5]}")
+            
+            # Combine all FPS values
+            all_fps_values = list(set(fps_pattern1 + fps_pattern2 + fps_pattern3))
+            print(f"   Total unique FPS values: {len(all_fps_values)} - {all_fps_values}")
+            
+            if not all_fps_values:
+                print("   ❌ No FPS values found in text")
+                return benchmarks
+            
+            # ENHANCED: Look for hardware context in larger text blocks
+            print(f"🔍 Looking for hardware context with expanded search...")
+            
+            # Split text into larger chunks (paragraphs) for better context
+            paragraphs = re.split(r'\n\s*\n', text_content)
+            print(f"   Found {len(paragraphs)} text paragraphs")
+            
+            for fps_value in all_fps_values:
+                print(f"   🔍 Processing FPS value: {fps_value}")
+                
+                # Find paragraphs containing this FPS value
+                relevant_paragraphs = []
+                for paragraph in paragraphs:
+                    if fps_value in paragraph and ('fps' in paragraph.lower() or 'FPS' in paragraph):
+                        relevant_paragraphs.append(paragraph.strip())
+                
+                print(f"      Found {len(relevant_paragraphs)} relevant paragraphs")
+                
+                # Process each relevant paragraph
+                for i, paragraph in enumerate(relevant_paragraphs[:3]):  # Process first 3 paragraphs
+                    print(f"      Analyzing paragraph {i+1}: {paragraph[:150]}...")
+                    
+                    # ENHANCED: Look for hardware names in this paragraph
+                    gpu_names = self.extract_gpu_names_from_text(paragraph)
+                    cpu_names = self.extract_cpu_names_from_text(paragraph)
+                    
+                    print(f"         GPU names found: {gpu_names}")
+                    print(f"         CPU names found: {cpu_names}")
+                    
+                    # ENHANCED: If no hardware found in this paragraph, look in nearby paragraphs
+                    if not gpu_names or not cpu_names:
+                        print(f"         🔍 Expanding search to nearby paragraphs...")
+                        
+                        # Look in paragraphs before and after this one
+                        # Use a more robust approach to find nearby paragraphs
+                        try:
+                            # Find the index of this paragraph in the list
+                            paragraph_index = -1
+                            for idx, para in enumerate(paragraphs):
+                                if paragraph in para or para in paragraph:
+                                    paragraph_index = idx
+                                    break
+                            
+                            if paragraph_index >= 0:
+                                print(f"            Found paragraph at index: {paragraph_index}")
+                                
+                                # Check previous paragraph
+                                if paragraph_index > 0:
+                                    prev_paragraph = paragraphs[paragraph_index - 1]
+                                    prev_gpu = self.extract_gpu_names_from_text(prev_paragraph)
+                                    prev_cpu = self.extract_cpu_names_from_text(prev_paragraph)
+                                    
+                                    if prev_gpu and not gpu_names:
+                                        gpu_names.extend(prev_gpu)
+                                        print(f"            Found GPUs in previous paragraph: {prev_gpu}")
+                                    
+                                    if prev_cpu and not cpu_names:
+                                        cpu_names.extend(prev_cpu)
+                                        print(f"            Found CPUs in previous paragraph: {prev_cpu}")
+                                
+                                # Check next paragraph
+                                if paragraph_index < len(paragraphs) - 1:
+                                    next_paragraph = paragraphs[paragraph_index + 1]
+                                    next_gpu = self.extract_gpu_names_from_text(next_paragraph)
+                                    next_cpu = self.extract_cpu_names_from_text(next_paragraph)
+                                    
+                                    if next_gpu and not gpu_names:
+                                        gpu_names.extend(next_gpu)
+                                        print(f"            Found GPUs in next paragraph: {next_gpu}")
+                                    
+                                    if next_cpu and not cpu_names:
+                                        cpu_names.extend(next_cpu)
+                                        print(f"            Found CPUs in next paragraph: {next_cpu}")
+                            else:
+                                print(f"            Could not find paragraph index, searching nearby text blocks...")
+                                
+                                # Fallback: search in nearby text blocks by looking for similar content
+                                for idx, para in enumerate(paragraphs):
+                                    if any(word in para.lower() for word in ['graphics', 'settings', 'fps', 'performance']):
+                                        nearby_gpu = self.extract_gpu_names_from_text(para)
+                                        nearby_cpu = self.extract_cpu_names_from_text(para)
+                                        
+                                        if nearby_gpu and not gpu_names:
+                                            gpu_names.extend(nearby_gpu)
+                                            print(f"            Found GPUs in nearby paragraph: {nearby_gpu}")
+                                        
+                                        if nearby_cpu and not cpu_names:
+                                            cpu_names.extend(nearby_cpu)
+                                            print(f"            Found CPUs in nearby paragraph: {nearby_cpu}")
+                                        
+                                        if len(gpu_names) > 0 and len(cpu_names) > 0:
+                                            break
+                                
+                        except Exception as e:
+                            print(f"            Error in nearby paragraph search: {e}")
+                            print(f"            Falling back to page-wide search...")
+                        
+                        # Remove duplicates
+                        gpu_names = list(set(gpu_names))
+                        cpu_names = list(set(cpu_names))
+                        print(f"         Final hardware list - GPUs: {gpu_names}, CPUs: {cpu_names}")
+                    
+                    # ENHANCED: Also look for hardware in the entire page context
+                    if not gpu_names or not cpu_names:
+                        print(f"         🔍 Searching entire page for hardware context...")
+                        
+                        # Look for hardware mentions in the whole page
+                        all_gpu_mentions = self.extract_gpu_names_from_text(text_content)
+                        all_cpu_mentions = self.extract_cpu_names_from_text(text_content)
+                        
+                        if all_gpu_mentions and not gpu_names:
+                            gpu_names = all_gpu_mentions[:3]  # Take first 3
+                            print(f"            Found GPUs in page context: {gpu_names}")
+                        
+                        if all_cpu_mentions and not cpu_names:
+                            cpu_names = all_cpu_mentions[:3]  # Take first 3
+                            print(f"            Found CPUs in page context: {cpu_names}")
+                    
+                    # Create benchmarks for each hardware combination
+                    if gpu_names and cpu_names:
+                        for gpu_name in gpu_names[:2]:  # Limit to first 2 GPUs
+                            for cpu_name in cpu_names[:2]:  # Limit to first 2 CPUs
+                                benchmark = BenchmarkData(
+                                    gpu_name=gpu_name,
+                                    cpu_name=cpu_name,
+                                    game_title=game_title,
+                                    resolution="1080p",  # Default assumption
+                                    settings="High",     # Default assumption
+                                    avg_fps=float(fps_value),
+                                    min_fps=float(fps_value) * 0.8,  # Estimate
+                                    max_fps=float(fps_value) * 1.2,  # Estimate
+                                    source_url=game_url,
+                                    source_site=self.name,
+                                    timestamp=pd.Timestamp.now().isoformat()
+                                )
+                                benchmarks.append(benchmark)
+                                print(f"         ✅ Created benchmark: {gpu_name} + {cpu_name} = {fps_value} FPS")
+                    
+                    elif gpu_names:
+                        # Only GPU found, use generic CPU
+                        for gpu_name in gpu_names[:2]:
+                            benchmark = BenchmarkData(
+                                gpu_name=gpu_name,
+                                cpu_name="Unknown CPU",
+                                game_title=game_title,
+                                resolution="1080p",
+                                settings="High",
+                                avg_fps=float(fps_value),
+                                min_fps=float(fps_value) * 0.8,
+                                max_fps=float(fps_value) * 1.2,
+                                source_url=game_url,
+                                source_site=self.name,
+                                timestamp=pd.Timestamp.now().isoformat()
+                            )
+                            benchmarks.append(benchmark)
+                            print(f"         ✅ Created benchmark: {gpu_name} + Unknown CPU = {fps_value} FPS")
+                    
+                    elif cpu_names:
+                        # Only CPU found, use generic GPU
+                        for cpu_name in cpu_names[:2]:
+                            benchmark = BenchmarkData(
+                                gpu_name="Unknown GPU",
+                                cpu_name=cpu_name,
+                                game_title=game_title,
+                                resolution="1080p",
+                                settings="High",
+                                avg_fps=float(fps_value),
+                                min_fps=float(fps_value) * 0.8,
+                                max_fps=float(fps_value) * 1.2,
+                                source_url=game_url,
+                                source_site=self.name,
+                                timestamp=pd.Timestamp.now().isoformat()
+                            )
+                            benchmarks.append(benchmark)
+                            print(f"         ✅ Created benchmark: Unknown GPU + {cpu_name} = {fps_value} FPS")
+                    
+                    else:
+                        # No hardware found, create generic benchmark
+                        benchmark = BenchmarkData(
+                            gpu_name="Unknown GPU",
+                            cpu_name="Unknown CPU",
+                            game_title=game_title,
+                            resolution="1080p",
+                            settings="High",
+                            avg_fps=float(fps_value),
+                            min_fps=float(fps_value) * 0.8,
+                            max_fps=float(fps_value) * 1.2,
+                            source_url=game_url,
+                            source_site=self.name,
+                            timestamp=pd.Timestamp.now().isoformat()
+                        )
+                        benchmarks.append(benchmark)
+                        print(f"         ✅ Created generic benchmark: Unknown GPU + Unknown CPU = {fps_value} FPS")
+            
+            print(f"🔍 Text extraction completed: {len(benchmarks)} benchmarks created")
+            
+            # Also use the existing text parsing methods as backup
+            existing_benchmarks = self.extract_from_text(soup, game_title, game_url)
+            benchmarks.extend(existing_benchmarks)
+            
+            return benchmarks
+            
+        except Exception as e:
+            logger.error(f"Error extracting text benchmarks: {e}")
+            return benchmarks
+
+    def extract_gpu_names_from_text(self, text: str) -> List[str]:
+        """Extract GPU names from text - ENHANCED FOR TECHPOWERUP"""
+        gpu_names = []
+        
+        # Enhanced TechPowerUp specific GPU patterns
+        gpu_patterns = [
+            # Full GPU names with model numbers
+            r'([A-Za-z0-9\s\-]+(?:RTX|GTX|RX|Radeon|GeForce)\s+\d+[A-Za-z0-9\s\-]*)',
+            r'([A-Za-z0-9\s\-]+(?:RTX|GTX|RX)\s+\d+[A-Za-z0-9\s\-]*)',
+            r'([A-Za-z0-9\s\-]+(?:Radeon|GeForce)\s+[A-Za-z0-9\s\-]*)',
+            
+            # GPU names without model numbers
+            r'([A-Za-z0-9\s\-]+(?:RTX|GTX|RX|Radeon|GeForce)[A-Za-z0-9\s\-]*)',
+            
+            # Specific GPU series
+            r'([A-Za-z0-9\s\-]+(?:RTX|GTX|RX)\s+\d+)',
+            r'([A-Za-z0-9\s\-]+(?:Radeon|GeForce)\s+[A-Za-z0-9\s\-]*)',
+            
+            # Common GPU abbreviations
+            r'([A-Za-z0-9\s\-]+(?:RTX|GTX|RX)\s+\d+[A-Za-z0-9\s\-]*)',
+            r'([A-Za-z0-9\s\-]+(?:Radeon|GeForce)[A-Za-z0-9\s\-]*)',
+        ]
+        
+        for pattern in gpu_patterns:
+            matches = re.findall(pattern, text, re.IGNORECASE)
+            for match in matches:
+                clean_name = self.clean_text(match)
+                if clean_name and len(clean_name) > 3 and clean_name not in gpu_names:
+                    # Additional validation
+                    if any(keyword in clean_name.lower() for keyword in ['rtx', 'gtx', 'rx', 'radeon', 'geforce']):
+                        gpu_names.append(clean_name)
+        
+        return gpu_names
+
+    def extract_cpu_names_from_text(self, text: str) -> List[str]:
+        """Extract CPU names from text - ENHANCED FOR TECHPOWERUP"""
+        cpu_names = []
+        
+        # Enhanced TechPowerUp specific CPU patterns
+        cpu_patterns = [
+            # Full CPU names with model numbers
+            r'([A-Za-z0-9\s\-]+(?:Intel|AMD|Ryzen|Core)\s+[A-Za-z0-9\s\-]*)',
+            r'([A-Za-z0-9\s\-]+(?:Intel|AMD)\s+[A-Za-z0-9\s\-]*)',
+            r'([A-Za-z0-9\s\-]+(?:Ryzen|Core)\s+[A-Za-z0-9\s\-]*)',
+            
+            # CPU names without model numbers
+            r'([A-Za-z0-9\s\-]+(?:Intel|AMD|Ryzen|Core)[A-Za-z0-9\s\-]*)',
+            
+            # Specific CPU series
+            r'([A-Za-z0-9\s\-]+(?:Intel|AMD)\s+[A-Za-z0-9\s\-]*)',
+            r'([A-Za-z0-9\s\-]+(?:Ryzen|Core)\s+[A-Za-z0-9\s\-]*)',
+            
+            # Common CPU abbreviations
+            r'([A-Za-z0-9\s\-]+(?:Intel|AMD)[A-Za-z0-9\s\-]*)',
+            r'([A-Za-z0-9\s\-]+(?:Ryzen|Core)[A-Za-z0-9\s\-]*)',
+        ]
+        
+        for pattern in cpu_patterns:
+            matches = re.findall(pattern, text, re.IGNORECASE)
+            for match in matches:
+                clean_name = self.clean_text(match)
+                if clean_name and len(clean_name) > 3 and clean_name not in cpu_names:
+                    # Additional validation
+                    if any(keyword in clean_name.lower() for keyword in ['intel', 'amd', 'ryzen', 'core', 'i3', 'i5', 'i7', 'i9']):
+                        cpu_names.append(clean_name)
+        
+        return cpu_names
+
+    def parse_benchmark_table(self, table: Tag, game_title: str, game_url: str) -> List[BenchmarkData]:
+        """Parse benchmark data from HTML tables"""
+        benchmarks = []
+        
+        try:
+            rows = table.find_all('tr')
+            if len(rows) < 2:  # Need at least header + data row
+                return benchmarks
+            
+            # Try to identify column headers
+            headers = rows[0].find_all(['th', 'td'])
+            header_texts = [h.get_text().lower().strip() for h in headers]
+            
+            # Find column indices
+            gpu_col = self.find_column_index(header_texts, ['gpu', 'graphics', 'card', 'video'])
+            cpu_col = self.find_column_index(header_texts, ['cpu', 'processor', 'chip'])
+            fps_col = self.find_column_index(header_texts, ['fps', 'performance', 'score', 'result'])
+            res_col = self.find_column_index(header_texts, ['resolution', 'res', 'pixel'])
+            settings_col = self.find_column_index(header_texts, ['settings', 'quality', 'preset'])
+            
+            # Parse data rows
+            for row in rows[1:]:  # Skip header row
+                cells = row.find_all(['td', 'th'])
+                if len(cells) < max(filter(None, [gpu_col, cpu_col, fps_col])) + 1:
+                    continue
+                
+                benchmark = self.create_benchmark_from_table_row(
+                    cells, gpu_col, cpu_col, fps_col, res_col, settings_col, 
+                    game_title, game_url
+                )
+                if benchmark:
+                    benchmarks.append(benchmark)
+                    
+        except Exception as e:
+            logger.error(f"Error parsing benchmark table: {e}")
+        
+        return benchmarks
+
+    def parse_benchmark_list(self, list_elem: Tag, game_title: str, game_url: str) -> List[BenchmarkData]:
+        """Parse benchmark data from HTML lists"""
+        benchmarks = []
+        
+        try:
+            list_items = list_elem.find_all('li')
+            
+            for item in list_items:
+                # Look for performance data in list items
+                text = item.get_text()
+                
+                # Try to extract FPS and hardware info
+                fps_match = re.search(r'(\d+(?:\.\d+)?)\s*FPS', text, re.IGNORECASE)
+                if not fps_match:
+                    continue
+                
+                fps_value = float(fps_match.group(1))
+                
+                # Extract hardware names
+                gpu_name = self.extract_hardware_name(text, 'gpu')
+                cpu_name = self.extract_hardware_name(text, 'cpu')
+                
+                if gpu_name or cpu_name:
+                    benchmark = BenchmarkData(
+                        gpu_name=gpu_name or "Unknown GPU",
+                        cpu_name=cpu_name or "Unknown CPU",
+                        game_title=game_title,
+                        resolution="1080p",
+                        settings="High",
+                        avg_fps=fps_value,
+                        min_fps=fps_value * 0.8,
+                        max_fps=fps_value * 1.2,
+                        source_url=game_url,
+                        source_site=self.name,
+                        timestamp=pd.Timestamp.now().isoformat()
+                    )
+                    benchmarks.append(benchmark)
+                    
+        except Exception as e:
+            logger.error(f"Error parsing benchmark list: {e}")
+        
+        return benchmarks
+
+    def parse_structured_div(self, div: Tag, game_title: str, game_url: str) -> List[BenchmarkData]:
+        """Parse benchmark data from structured div elements"""
+        benchmarks = []
+        
+        try:
+            # Look for performance data in structured divs
+            performance_elements = div.find_all(['div', 'span'], class_=re.compile(r'fps|performance|score|result', re.I))
+            
+            for elem in performance_elements:
+                benchmark = self.parse_performance_element(elem, game_title, game_url)
+                if benchmark:
+                    benchmarks.append(benchmark)
+                    
+        except Exception as e:
+            logger.error(f"Error parsing structured div: {e}")
+        
+        return benchmarks
+
+    def parse_performance_text(self, text_elem: Tag, game_title: str, game_url: str) -> List[BenchmarkData]:
+        """Parse performance data from text elements"""
+        benchmarks = []
+        
+        try:
+            text = text_elem.get_text()
+            
+            # Look for FPS mentions
+            fps_matches = re.finditer(r'(\d+(?:\.\d+)?)\s*FPS', text, re.IGNORECASE)
+            
+            for match in fps_matches:
+                fps_value = float(match.group(1))
+                
+                # Try to extract hardware context from surrounding text
+                gpu_name = self.extract_hardware_name(text, 'gpu')
+                cpu_name = self.extract_hardware_name(text, 'cpu')
+                
+                if gpu_name or cpu_name:
+                    benchmark = BenchmarkData(
+                        gpu_name=gpu_name or "Unknown GPU",
+                        cpu_name=cpu_name or "Unknown CPU",
+                        game_title=game_title,
+                        resolution="1080p",
+                        settings="High",
+                        avg_fps=fps_value,
+                        min_fps=fps_value * 0.8,
+                        max_fps=fps_value * 1.2,
+                        source_url=game_url,
+                        source_site=self.name,
+                        timestamp=pd.Timestamp.now().isoformat()
+                    )
+                    benchmarks.append(benchmark)
+                    
+        except Exception as e:
+            logger.error(f"Error parsing performance text: {e}")
+        
+        return benchmarks
+
+    def find_column_index(self, headers: List[str], keywords: List[str]) -> Optional[int]:
+        """Find the index of a column based on header keywords"""
+        for i, header in enumerate(headers):
+            if any(keyword in header for keyword in keywords):
+                return i
+        return None
+
+    def create_benchmark_from_table_row(self, cells: List[Tag], gpu_col: Optional[int], 
+                                      cpu_col: Optional[int], fps_col: Optional[int],
+                                      res_col: Optional[int], settings_col: Optional[int],
+                                      game_title: str, game_url: str) -> Optional[BenchmarkData]:
+        """Create a benchmark from table row data"""
+        try:
+            # Extract values from cells
+            gpu_name = cells[gpu_col].get_text().strip() if gpu_col is not None and gpu_col < len(cells) else "Unknown GPU"
+            cpu_name = cells[cpu_col].get_text().strip() if cpu_col is not None and cpu_col < len(cells) else "Unknown CPU"
+            
+            # Extract FPS value
+            fps_value = None
+            if fps_col is not None and fps_col < len(cells):
+                fps_text = cells[fps_col].get_text()
+                fps_value = self.extract_fps_value(fps_text)
+            
+            if not fps_value:
+                return None
+            
+            # Extract resolution and settings
+            resolution = "1080p"
+            if res_col is not None and res_col < len(cells):
+                res_text = cells[res_col].get_text()
+                extracted_res = self.extract_resolution_from_text(res_text)
+                if extracted_res:
+                    resolution = extracted_res
+            
+            settings = "High"
+            if settings_col is not None and settings_col < len(cells):
+                settings_text = cells[settings_col].get_text()
+                extracted_settings = self.extract_settings_from_text(settings_text)
+                if extracted_settings:
+                    settings = extracted_settings
+            
+            return BenchmarkData(
+                gpu_name=self.clean_text(gpu_name),
+                cpu_name=self.clean_text(cpu_name),
+                game_title=game_title,
+                resolution=resolution,
+                settings=settings,
+                avg_fps=fps_value,
+                min_fps=fps_value * 0.8,
+                max_fps=fps_value * 1.2,
+                source_url=game_url,
+                source_site=self.name,
+                timestamp=pd.Timestamp.now().isoformat()
+            )
+            
+        except Exception as e:
+            logger.error(f"Error creating benchmark from table row: {e}")
+            return None
+
+    def extract_hardware_name(self, text: str, hardware_type: str) -> Optional[str]:
+        """Extract hardware name from text based on type"""
+        if hardware_type == 'gpu':
+            # Look for GPU patterns
+            gpu_patterns = [
+                r'([A-Za-z0-9\s\-]+(?:RTX|GTX|RX|Radeon|GeForce)[A-Za-z0-9\s\-]*)',
+                r'([A-Za-z0-9\s\-]+(?:RTX|GTX|RX)\s+\d+[A-Za-z0-9\s\-]*)',
+                r'([A-Za-z0-9\s\-]+(?:Radeon|GeForce)[A-Za-z0-9\s\-]*)'
+            ]
+        else:  # CPU
+            # Look for CPU patterns
+            gpu_patterns = [
+                r'([A-Za-z0-9\s\-]+(?:Intel|AMD|Ryzen|Core|i[3579])[A-Za-z0-9\s\-]*)',
+                r'([A-Za-z0-9\s\-]+(?:Intel|AMD)[A-Za-z0-9\s\-]*)',
+                r'([A-Za-z0-9\s\-]+(?:Ryzen|Core)[A-Za-z0-9\s\-]*)'
+            ]
+        
+        for pattern in gpu_patterns:
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                return self.clean_text(match.group(1))
+        
+        return None
+
+    def extract_fps_value(self, text: str) -> Optional[float]:
+        """Extract FPS value from text"""
+        fps_match = re.search(r'(\d+(?:\.\d+)?)', text)
+        if fps_match:
+            try:
+                return float(fps_match.group(1))
+            except ValueError:
+                pass
+        return None
+
+    def extract_resolution_from_text(self, text: str) -> Optional[str]:
+        """Extract resolution from text"""
+        resolution_patterns = [r'(\d{3,4}p)', r'(\d{3,4}x\d{3,4})', r'(4k|1440p|1080p)', r'(\d{3,4})p']
+        
+        for pattern in resolution_patterns:
+            match = re.search(pattern, text, re.I)
+            if match:
+                return match.group(1)
+        
+        return None
+
+    def extract_settings_from_text(self, text: str) -> Optional[str]:
+        """Extract graphics settings from text"""
+        settings_keywords = ['low', 'medium', 'high', 'ultra', 'max', 'min', 'normal', 'extreme']
+        
+        text_lower = text.lower()
+        for setting in settings_keywords:
+            if setting in text_lower:
+                return setting.title()
+        
+        return None
+
+    def parse_performance_element(self, elem: Tag, game_title: str, game_url: str) -> Optional[BenchmarkData]:
+        """Parse performance data from individual elements"""
+        try:
+            text = elem.get_text()
+            
+            # Extract FPS value
+            fps_match = re.search(r'(\d+(?:\.\d+)?)\s*FPS', text, re.IGNORECASE)
+            if not fps_match:
+                return None
+            
+            fps_value = float(fps_match.group(1))
+            
+            # Extract hardware names from context
+            gpu_name = self.extract_gpu_from_context(elem)
+            cpu_name = self.extract_cpu_from_context(elem)
+            
+            if gpu_name and cpu_name:
+                return BenchmarkData(
+                    gpu_name=gpu_name,
+                    cpu_name=cpu_name,
+                    game_title=game_title,
+                    resolution="1080p",
+                    settings="High",
+                    avg_fps=fps_value,
+                    min_fps=fps_value * 0.8,
+                    max_fps=fps_value * 1.2,
+                    source_url=game_url,
+                    source_site=self.name,
+                    timestamp=pd.Timestamp.now().isoformat()
+                )
+            
+        except Exception as e:
+            logger.debug(f"Error parsing performance element: {e}")
+        
+        return None
+    
     def extract_game_title(self, soup: BeautifulSoup) -> str:
         """Extract game title from page"""
         # Try multiple selectors for game title
@@ -403,7 +1117,7 @@ class TechPowerUpScraper(BaseScraper):
     
     def extract_cpu_name(self, cells: List[Tag]) -> Optional[str]:
         """Extract CPU name from cells"""
-        cpu_keywords = ['intel', 'amd', 'ryzen', 'core', 'i3', 'i5', 'i7', 'i9', 'cpu', 'processor', 'pentium']
+        cpu_keywords = ['intel', 'amd', 'ryzen', 'core', 'i3', 'i5', 'i7', 'i9', 'pentium']
         
         for cell in cells:
             text = cell.get_text().lower()

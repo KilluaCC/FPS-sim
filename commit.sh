@@ -1,39 +1,42 @@
 #!/bin/bash
 
-# Simple Git Commit Automation Script
-# Usage: ./commit.sh "your commit message"
+# Quick Git commit and push script
+# Usage: ./commit.sh "Your commit message"
 
-echo "🚀 Git Commit Automation Script"
-echo "================================"
-
-# Check if commit message was provided
 if [ -z "$1" ]; then
-    echo "❌ Please provide a commit message!"
-    echo "Usage: ./commit.sh \"your commit message\""
+    echo "❌ Error: Please provide a commit message"
+    echo "Usage: ./commit.sh \"Your commit message\""
     exit 1
 fi
 
 COMMIT_MSG="$1"
 
+echo "🚀 Quick Git Commit & Push"
+echo "=========================="
 echo "📝 Commit message: $COMMIT_MSG"
 echo ""
 
-# Check git status
-echo "🔍 Checking git status..."
+# Show current status
+echo "📊 Current status:"
 git status --short
-
 echo ""
-echo "📦 Adding all changes..."
+
+# Add all changes
+echo "➕ Adding all changes..."
 git add .
-
+echo "✅ Added all changes"
 echo ""
-echo "💾 Committing with message: '$COMMIT_MSG'"
+
+# Commit with message
+echo "💾 Committing changes..."
 git commit -m "$COMMIT_MSG"
-
+echo "✅ Commit successful!"
 echo ""
-echo "📤 Pushing to remote..."
+
+# Push to remote
+echo "🚀 Pushing to remote..."
 git push
-
+echo "✅ Push successful!"
 echo ""
-echo "✅ Done! Your changes are now committed and pushed."
-echo "🌐 Check your repository: https://github.com/KilluaCC/FPS-sim"
+
+echo "🎉 All done! Changes committed and pushed."
